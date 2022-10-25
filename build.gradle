@@ -1,0 +1,64 @@
+buildscript {
+    repositories {
+        maven {
+            url "${artifactoryContextUrl}/libs-release"
+            credentials {
+                username = artifactoryUser
+                password = artifactoryPassword
+            }
+        }
+    }
+    dependencies {
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.10.0'
+    }
+}
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.artifactory'
+}
+
+artifactory {
+    contextUrl = artifactoryContextUrl
+    publish {
+        repository {
+            repoKey = version.endsWith('SNAPSHOT') ? 'libs-snapshot-local' : 'libs-release-local'
+            username = artifactoryUser
+            password = artifactoryPassword
+            maven = true
+        }
+        defaults {
+            publications('springBootStarterSwaggerDocs')
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+            username = artifactoryUser
+            password = artifactoryPassword
+            maven = true
+        }
+    }
+}
+
+publishing {
+    publications {
+        springBootStarterSwaggerDocs(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+configurations {
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+    implementation 'io.springfox:springfox-bean-validators:2.9.2'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+}
